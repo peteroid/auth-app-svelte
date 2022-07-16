@@ -1,7 +1,9 @@
 <script>
-	import { Clipboard, Icon, Key, Link, LockOpen } from 'svelte-hero-icons';
+	import { Clipboard, Eye, EyeOff, Icon, Key, Link, LockOpen, Pencil } from 'svelte-hero-icons';
 	import totp from 'totp-generator';
 	import { onDestroy, onMount } from 'svelte';
+	import { page } from '$app/stores';
+
 	let secret = '';
 	let tokenInput;
 	let linkInput;
@@ -9,10 +11,13 @@
 	let messages = [];
 	let refreshTokenTimer;
 	let tokenRefreshRemain = 0;
+	let isEditingSecret = false;
 
 	onMount(() => {
-		secret = localStorage.getItem('auth_app:last_secret') || '';
+		secret =
+			$page.url.searchParams.get('secret') || localStorage.getItem('auth_app:last_secret') || '';
 		hasInitSecret = true;
+		isEditingSecret = !secret;
 		refreshToken();
 	});
 
@@ -31,7 +36,6 @@
 		try {
 			token = totp(secret);
 			link = typeof window !== 'undefined' ? `${window.origin}/?secret=${secret}` : '';
-
 			if (hasInitSecret) localStorage.setItem('auth_app:last_secret', secret);
 		} catch {
 			token = 'Invalid';
@@ -72,6 +76,10 @@
 	const onClickLink = () => {
 		copyLink();
 	};
+
+	const onClickSecret = () => {
+		isEditingSecret = !isEditingSecret;
+	};
 </script>
 
 <div
@@ -103,12 +111,25 @@
 						<span>
 							<Icon src={LockOpen} class="w-6" />
 						</span>
-						<input
-							type="text"
-							placeholder="Secret"
-							class="input input-bordered input-md w-full"
-							bind:value={secret}
-						/>
+						{#if !isEditingSecret}
+							<input
+								readonly
+								type="password"
+								placeholder="Secret"
+								class="input input-bordered input-md w-full"
+								value={secret}
+							/>
+						{:else}
+							<input
+								type="text"
+								placeholder="Secret"
+								class="input input-bordered input-md w-full"
+								bind:value={secret}
+							/>
+						{/if}
+						<button class="btn btn-outline btn-accent" on:click={onClickSecret}>
+							<Icon src={isEditingSecret ? EyeOff : Pencil} class="w-5" />
+						</button>
 					</label>
 				</div>
 				<div class="form-control">
@@ -118,17 +139,21 @@
 						</span>
 						<div class="w-full relative">
 							<input
+								readonly
 								type="text"
 								placeholder="Token"
-								class="token-input input input-bordered input-md w-full input-disabled cursor-pointer"
+								class="input input-bordered !rounded-none input-md w-full input-disabled cursor-pointer"
 								bind:this={tokenInput}
 								on:click={onClickToken}
 								value={token}
 							/>
-							<div class="h-1 absolute bottom-0 left-0 right-0 rounded-full">
+							<div class="h-0.5 absolute bottom-0 left-0 right-0 rounded-full">
 								<div
-									class="bg-accent h-1 transition-all"
-									style={`width:${Math.min(100, Math.floor(((tokenRefreshRemain - 1) / 30) * 100))}%`}
+									class="bg-accent h-full transition-transform origin-left"
+									style={`transform:scaleX(${Math.min(
+										100,
+										Math.floor(((tokenRefreshRemain - 1) / 30) * 100)
+									)}%)`}
 								/>
 							</div>
 						</div>
@@ -144,6 +169,7 @@
 						</span>
 
 						<input
+							readonly
 							type="text"
 							placeholder="Link"
 							class="input input-bordered input-md w-full input-disabled cursor-pointer"
@@ -151,7 +177,7 @@
 							on:click={onClickLink}
 							value={link}
 						/>
-						<button class="btn btn-secondary" on:click={onClickLink}>
+						<button class="btn btn-outline btn-secondary" on:click={onClickLink}>
 							<Icon src={Clipboard} class="w-5" /></button
 						>
 					</label>
@@ -174,9 +200,3 @@
 		{/each}
 	</div>
 </div>
-
-<style scoped>
-	.token-input {
-		border-radius: 0;
-	}
-</style>
