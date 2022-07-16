@@ -120,7 +120,7 @@
 							<input
 								type="text"
 								placeholder="Token"
-								class="input input-bordered input-md w-full input-disabled cursor-pointer"
+								class="token-input input input-bordered input-md w-full input-disabled cursor-pointer"
 								bind:this={tokenInput}
 								on:click={onClickToken}
 								value={token}
@@ -128,7 +128,7 @@
 							<div class="h-1 absolute bottom-0 left-0 right-0 rounded-full">
 								<div
 									class="bg-accent h-1 transition-all"
-									style={`width:${Math.min(100, Math.floor((tokenRefreshRemain / 30) * 100))}%`}
+									style={`width:${Math.min(100, Math.floor(((tokenRefreshRemain - 1) / 30) * 100))}%`}
 								/>
 							</div>
 						</div>
@@ -174,3 +174,9 @@
 		{/each}
 	</div>
 </div>
+
+<style scoped>
+	.token-input {
+		border-radius: 0;
+	}
+</style>
