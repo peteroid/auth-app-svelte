@@ -1,8 +1,21 @@
 <script>
-	import { Clipboard, Eye, EyeOff, Icon, Key, Link, LockOpen, Pencil } from 'svelte-hero-icons';
+	import { Clipboard, EyeOff, Icon, Key, Link, LockOpen, Pencil } from 'svelte-hero-icons';
 	import totp from 'totp-generator';
 	import { onDestroy, onMount } from 'svelte';
 	import { page } from '$app/stores';
+
+	// https://dev.to/mohamadharith/mutating-query-params-in-sveltekit-without-page-reloads-or-navigations-2i2b
+	const replaceStateWithQuery = (values) => {
+		const url = new URL(window.location.toString());
+		for (let [k, v] of Object.entries(values)) {
+			if (!!v) {
+				url.searchParams.set(encodeURIComponent(k), encodeURIComponent(v));
+			} else {
+				url.searchParams.delete(k);
+			}
+		}
+		history.replaceState({}, '', url);
+	};
 
 	let secret = '';
 	let tokenInput;
@@ -37,6 +50,10 @@
 			token = totp(secret);
 			link = typeof window !== 'undefined' ? `${window.origin}/?secret=${secret}` : '';
 			if (hasInitSecret) localStorage.setItem('auth_app:last_secret', secret);
+
+			replaceStateWithQuery({
+				secret
+			});
 		} catch {
 			token = 'Invalid';
 		}
@@ -149,7 +166,7 @@
 							/>
 							<div class="h-0.5 absolute bottom-0 left-0 right-0 rounded-full">
 								<div
-									class="bg-accent h-full transition-transform origin-left"
+									class="bg-primary h-full transition-transform origin-left"
 									style={`transform:scaleX(${Math.min(
 										100,
 										Math.floor(((tokenRefreshRemain - 1) / 30) * 100)
